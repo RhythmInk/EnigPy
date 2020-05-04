@@ -2,3 +2,4 @@ __pycache__/
 reflector.txt
 rotors.txt   
 wiring.txt
+data.pickle
