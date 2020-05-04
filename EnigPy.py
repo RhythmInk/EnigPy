@@ -13,17 +13,19 @@ from random import sample
 from copy import deepcopy
 from time import sleep
 import pickle
-from ListMethods import *
+import pathlib
+import string
 from colorama import Fore, Style
+
+from ListMethods import *
+from fileIO import * 
 
 ####################
 # Global Variables #
 ####################
 # alphabet list whose indicies are used to exchange letters with numbers for encryption/decryption
-alph = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-ALPH = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P',
-        'Q','R','S','T','U','V','W','X','Y','Z']
+alph = string.ascii_lowercase
+ALPH = string.ascii_uppercase
 spec_chars = ['\'',';',':','.','"','?','!',',', ' ']
 
 wiring = []
@@ -159,18 +161,23 @@ def set_wires(al):
 def generate_machine(al, s=False):
 
     if s:
+        print()
         print('Generating Rotors')
         r1, r2, r3 = generate_rotors()
         print('Generating Reflector')
         rf = generate_reflector()
+        print('Setting Wires')
         wr = set_wires(al)
+        print()
     else:
+        print()
         print('Generating Rotors')
         r1, r2, r3 = generate_rotors()
         print('Generating Reflector')
         rf = generate_reflector()
         print('Generating Wiring')
         wr = generate_wiring()
+        print()
 
     return r1, r2, r3, wr, rf
 
@@ -345,6 +352,7 @@ def import_machine():
 #Machine Manipulation#
 ######################
 
+
 def reverse_rotors(r1, r2, r3):
     '''Changes the direction of the rotor. e.g. if 1 -> 4, then 4 -> 1
     Arguments:
@@ -404,7 +412,26 @@ def set_rotor_position(r1, r2, r3, r1pos, r2pos, r3pos):
 #######################
 
 
-def map_input(letter, r1, r2, r3, wr, rf, al):
+def get_input():
+
+    answer = input('Do you want to encode a file? Note: The file will be deleted in accordance with best security practices. (y/n) ')
+
+    if answer.strip().lower()[0] == 'y':
+        path = input('Provide the absolute path to the file: ')
+        file_content = file_lines_into_list(path)
+        Path(path).unlink()
+
+        return file_content
+
+    if answer.strip().lower()[0] == 'n':
+        print('Enter the string you would like to encrypt/decrypt. Enter a blank line when you\'re done.')
+        sentinel = ''
+        user_input =  list(iter(input, sentinel))
+
+        return user_input
+
+
+def map_input(letter, r1, r2, r3, wr, rf, al, o=False):
     '''Maps each letter through wiring, forward rotors, reflector backward rotors, wiring
     Arguments:
     :letter: character
@@ -416,13 +443,31 @@ def map_input(letter, r1, r2, r3, wr, rf, al):
     '''
     t1, t2, t3 = reverse_rotors(r1, r2, r3)  # reverse rotors so letter maps backwards through them
 
+    if o:
+        n = al.index(letter)
+        print('encryption path: {0} -> {1} -> {2} -> {3} -> {4} -> {5} -> {6} -> {7} -> {8} -> {9}'.format(
+            letter,
+            al[wr[n]],
+            al[r1[wr[n]]],
+            al[r2[r1[wr[n]]]],
+            al[r3[r2[r1[wr[n]]]]],
+            al[rf[r3[r2[r1[wr[n]]]]]],
+            al[t3[rf[r3[r2[r1[wr[n]]]]]]],
+            al[t2[t3[rf[r3[r2[r1[wr[n]]]]]]]],
+            al[t1[t2[t3[rf[r3[r2[r1[wr[n]]]]]]]]],
+            al[wr[t1[t2[t3[rf[r3[r2[r1[wr[n]]]]]]]]]]))
+
+        return al[wr[t1[t2[t3[rf[r3[r2[r1[wr[n]]]]]]]]]]
+
+    return al[wr[t1[t2[t3[rf[r3[r2[r1[wr[al.index(letter)]]]]]]]]]]
     return al[wr[t1[t2[t3[rf[r3[r2[r1[wr[al.index(letter)]]]]]]]]]]
 
 
-def encode(r1, r2, r3, r1pos, r2pos, r3pos, wr, rf, al, d=False):
+def encode(r1, r2, r3, r1pos, r2pos, r3pos, wr, rf, al, d=False, o=False,f=False):
     '''
     :d: decrypt (allow seting rotor positions)
     :o: open encode
+    :f: output to file
     '''
     output = []
 
@@ -432,35 +477,46 @@ def encode(r1, r2, r3, r1pos, r2pos, r3pos, wr, rf, al, d=False):
         print('rotor settings are {0}, {1}, {2} \n Please write these down so you can decode the message.'.format(
             r1pos, r2pos, r3pos))
 
-    user_input =  input('Enter the string you would like to encrypt/decrypt. ')
-
-    for letter in user_input:
-        #  just pass special characters through plain
-        if letter in spec_chars:
-            output.append(letter)
-            continue
-        #  convert to lowercase, pass through, and re-capitaliza
-        if letter in ALPH:
-            output.append(map_input(letter.lower(), r1, r2, r3, wr, rf, al).upper())
-        else:
-            output.append(map_input(letter, r1, r2, r3, wr, rf, al))
+    user_input = get_input()
 
 
-        r1 = cycle_list(r1)
-        r1pos += 1
-        if r1pos == 26:
-            r1pos = 0
-            r2pos += 1
-            r2 = cycle_list(r2)
-            if r2pos == 26:
-                r2pos = 0
-                r3pos += 1
-                r3 = cycle_list(r3)
-                if r3pos == 26:
-                    r3pos = 0
+    for line in user_input:
+        for letter in line:
+            if letter in spec_chars:  # handle special chars
+                output.append(letter)
+                continue
+            if letter in ALPH:
+                if o:
+                    output.append(map_input(letter.lower(), r1, r2, r3, wr, rf, al, o).upper())
+                else:
+                    output.append(map_input(letter.lower(), r1, r2, r3, wr, rf, al).upper())
+            else:
+                if o:
+                    output.append(map_input(letter, r1, r2, r3, wr, rf, al, o))
+                else:
+                    output.append(map_input(letter, r1, r2, r3, wr, rf, al))
 
+            r1 = cycle_list(r1)
+            r1pos += 1
+            if r1pos == 26:
+                r1pos = 0
+                r2pos += 1
+                r2 = cycle_list(r2)
+                if r2pos == 26:
+                    r2pos = 0
+                    r3pos += 1
+                    r3 = cycle_list(r3)
+                    if r3pos == 26:
+                        r3pos = 0
 
-    print(Fore.GREEN + ''.join(output)+Style.RESET_ALL)
+        output.append('\n')
+
+    output = ''.join(output)
+
+    if f:
+        Path(input('Enter the path for output: ')).write_text(output)
+    else:
+        print(Fore.GREEN + output +Style.RESET_ALL)
     return r1, r2, r3, r1pos, r2pos, r3pos
 
 
@@ -471,6 +527,7 @@ if __name__ == '__main__':
 
     if answer == 'y':
         rotor1, rotor2, rotor3, rotor1_pos, rotor2_pos, rotor3_pos, reflector, wiring = import_machine()
+        #rotor1, rotor2, rotor3, rotor1_pos, rotor2_pos, rotor3_pos, wiring, reflector = unpickle_machine()
     else:
         answer = input('Do you wish to set the wiring? (y/n) ')
         if answer == 'y':
@@ -484,18 +541,42 @@ if __name__ == '__main__':
                 'What would you like to do? \n (1) Encrypt Message \n (2) Decrypt Message \n (q) quit \n')
 
             if answer == '1':
-                rotor1, rotor2, rotor3, rotor1_pos, rotor2_pos, rotor3_pos = encode(
+                answer = input(
+                    'Which would you like? \n (0) Secret Encryption \n (1) Open Encryption \n (2) Output to file \n')
+                if answer == '0':
+                    rotor1, rotor2, rotor3, rotor1_pos, rotor2_pos, rotor3_pos = encode(
                         rotor1, rotor2, rotor3, rotor1_pos, rotor2_pos, rotor3_pos, wiring, reflector, alph)
-                continue
+                    continue
+                if answer == '1':
+                    rotor1, rotor2, rotor3, rotor1_pos, rotor2_pos, rotor3_pos = encode(
+                        rotor1, rotor2, rotor3, rotor1_pos, rotor2_pos, rotor3_pos, wiring, reflector, alph, o=True)
+                    continue
+                if answer =='2':
+                    rotor1, rotor2, rotor3, rotor1_pos, rotor2_pos, rotor3_pos = encode(
+                        rotor1, rotor2, rotor3, rotor1_pos, rotor2_pos, rotor3_pos, wiring, reflector, alph, f=True)
+
             elif answer == '2':
-                rotor1, rotor2, rotor3, rotor1_pos, rotor2_pos, rotor3_pos = encode(
-                    rotor1, rotor2, rotor3, rotor1_pos, rotor2_pos, rotor3_pos, wiring, reflector, alph, d=True)
-                continue
+                answer = input(
+                    'Which would you like? \n (0) Secret Decryption \n (1) Open Decryption \n (2) Output to file \n')
+                if answer == '0':
+                    rotor1, rotor2, rotor3, rotor1_pos, rotor2_pos, rotor3_pos = encode(
+                        rotor1, rotor2, rotor3, rotor1_pos, rotor2_pos, rotor3_pos, wiring, reflector, alph, d=True)
+                    continue
+                if answer == '1':
+                    rotor1, rotor2, rotor3, rotor1_pos, rotor2_pos, rotor3_pos = encode(
+                        rotor1, rotor2, rotor3, rotor1_pos, rotor2_pos, rotor3_pos, wiring, reflector, alph, d=True, o=True)
+                    continue
+                if answer == '2':
+                    rotor1, rotor2, rotor3, rotor1_pos, rotor2_pos, rotor3_pos = encode(
+                        rotor1, rotor2, rotor3, rotor1_pos, rotor2_pos, rotor3_pos, wiring, reflector, alph, d=True, f=True)
+
             elif answer == 'q':
                 answer = input('Do you wish to save current machine? (y/n): ').strip().lower()[0]
                 if answer == 'y':
                     save_machine(rotor1, rotor2, rotor3, rotor1_pos,
                                   rotor2_pos, rotor3_pos, wiring, reflector)
+                    #pickle_machine(rotor1, rotor2, rotor3, rotor1_pos,
+                                   #rotor2_pos, rotor3_pos, wiring, reflector)
                 print('Exiting')
                 break
             else:
