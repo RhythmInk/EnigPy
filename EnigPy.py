@@ -22,6 +22,9 @@ from colorama import Fore, Style
 # alphabet list whose indicies are used to exchange letters with numbers for encryption/decryption
 alph = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
         'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+ALPH = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P',
+        'Q','R','S','T','U','V','W','X','Y','Z']
+spec_chars = ['\'',';',':','.','"','?','!',',', ' ']
 
 wiring = []
 reflector = []
@@ -432,7 +435,16 @@ def encode(r1, r2, r3, r1pos, r2pos, r3pos, wr, rf, al, d=False):
     user_input =  input('Enter the string you would like to encrypt/decrypt. ')
 
     for letter in user_input:
-        output.append(map_input(letter, r1, r2, r3, wr, rf, al))
+        #  just pass special characters through plain
+        if letter in spec_chars:
+            output.append(letter)
+            continue
+        #  convert to lowercase, pass through, and re-capitaliza
+        if letter in ALPH:
+            output.append(map_input(letter.lower(), r1, r2, r3, wr, rf, al).upper())
+        else:
+            output.append(map_input(letter, r1, r2, r3, wr, rf, al))
+
 
         r1 = cycle_list(r1)
         r1pos += 1
