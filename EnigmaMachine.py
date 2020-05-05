@@ -1,10 +1,13 @@
-#!/usr/bin/python3 
+#!/usr/bin/python3.7
 
-from time import sleep
-from colorama import Fore, Style
+
 import pickle
-from pathlib import Path
 import string
+import sys
+
+from pathlib  import Path
+from time     import sleep
+from colorama import Fore, Style
 
 from fileIO import file_lines_into_list
 from Rotors import Rotor
@@ -13,7 +16,7 @@ from Wiring import Wiring
 
 alph = string.ascii_lowercase
 ALPH = string.ascii_uppercase
-spec_chars = ['\'', ';', ':', '.', '"', '?', '!', ',', ' ']
+spec_chars = ['\'', ';', ':', '.', '"', '?', '!', ',', ' ', '\n', '\t']
 
 class EnigmaMachine:
 
@@ -69,9 +72,8 @@ class EnigmaMachine:
             return file_content
 
         if answer.strip().lower()[0] == 'n':
-            print('Enter the string you would like to encrypt/decrypt. Enter a blank line when you\'re done.')
-            sentinel = ''
-            user_input = list(iter(input, sentinel))
+            print('Enter the string you would like to encrypt/decrypt. CTRL+D ends input')
+            user_input = sys.stdin.read()
 
             return user_input
 
@@ -123,36 +125,35 @@ class EnigmaMachine:
 
         user_input = self.get_input()
 
-        for line in user_input:
-            for letter in line:
-                if letter in spec_chars:  # handle special chars
-                    output.append(letter)
-                    continue
-                if letter in ALPH:
-                    if verbose:
-                        output.append(self.map_input(letter.lower(), verbose).upper())
-                    else:
-                        output.append(self.map_input(letter.lower(),).upper())
+        for char in user_input:
+            if char in spec_chars:
+                output.append(char)
+                #  do not advance rotors for special chars
+                continue
+            if char in ALPH:
+                if verbose:
+                    output.append(self.map_input(char.lower(), verbose).upper())
                 else:
-                    if verbose:
-                        output.append(self.map_input(letter, verbose))
-                    else:
-                        output.append(self.map_input(letter))
+                    output.append(self.map_input(char.lower(),).upper())
+            else:
+                if verbose:
+                    output.append(self.map_input(char, verbose))
+                else:
+                    output.append(self.map_input(char))
 
-                self.rotor1.advance()
-                self.rotor1.pos += 1
-                if self.rotor1.pos == 26:
-                    self.rotor1.pos = 0
-                    self.rotor2.pos += 1
-                    self.rotor2.advance()
-                    if self.rotor2.pos == 26:
-                        self.rotor2.pos = 0
-                        self.rotor3.pos += 1
-                        self.rotor3.advance()
-                        if self.rotor3.pos == 26:
-                            self.rotor3.pos = 0
+            self.rotor1.advance()
+            self.rotor1.pos += 1
+            if self.rotor1.pos == 26:
+                self.rotor1.pos = 0
+                self.rotor2.pos += 1
+                self.rotor2.advance()
+                if self.rotor2.pos == 26:
+                    self.rotor2.pos = 0
+                    self.rotor3.pos += 1
+                    self.rotor3.advance()
+                    if self.rotor3.pos == 26:
+                        self.rotor3.pos = 0
 
-            output.append('\n')
 
         output = ''.join(output)
 
