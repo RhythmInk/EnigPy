@@ -107,7 +107,7 @@ class EnigmaMachine:
         return alph[wr[t1[t2[t3[rf[r3[r2[r1[wr[alph.index(letter)]]]]]]]]]]
 
 
-    def encode(self, decrypt=False, verbose=False, use_file=False):
+    def encode(self, user_input, machine_settings = (0,0,0), decrypt=False, verbose=False, use_file=False):
         '''
         :d: decrypt (allow seting rotor positions)
         :o: open encode
@@ -116,14 +116,13 @@ class EnigmaMachine:
         output = []
 
         if decrypt:
-            self.rotor1.set_position(1)
-            self.rotor2.set_position(2)
-            self.rotor3.set_position(3)
+            self.rotor1.set_position(machine_settings[0])
+            self.rotor2.set_position(machine_settings[1])
+            self.rotor3.set_position(machine_settings[2])
         else:
-            print('rotor settings are {0}, {1}, {2} \n Please write these down so you can decode the message.'.format(
-                self.rotor1.pos, self.rotor2.pos, self.rotor3.pos))
+           rotor_settings = self.rotor1.pos, self.rotor2.pos, self.rotor3.pos
 
-        user_input = self.get_input()
+        # user_input = self.get_input()
 
         for char in user_input:
             if char in spec_chars:
@@ -157,10 +156,10 @@ class EnigmaMachine:
 
         output = ''.join(output)
 
-        if use_file:
-            Path(input('Enter the path for output: ')).write_text(output)
+        if decrypt:
+            return output
         else:
-            print(Fore.GREEN + output + Style.RESET_ALL)
+            return rotor_settings, output
 
     ##########
     #Listener#
@@ -220,6 +219,6 @@ class EnigmaMachine:
                 continue
 
 
-if __name__ == '__main__':
-    machine = EnigmaMachine()
-    machine.listen()
+# if __name__ == '__main__':
+#     machine = EnigmaMachine()
+#     machine.listen()

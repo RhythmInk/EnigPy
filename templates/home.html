@@ -15,16 +15,32 @@
       <h1 class="display-1 text-primary">EnigPy</h1>      
         <p>An enigma machine emulator written in Python 3 and Flask.</p>
     </div>
-    <div class="container">
+
+    <div class="container-fluid">
+      <div class="container mt-4">
         <div class="jumbotron">
-            <h1>Enigma Machine</h1>
-            <p class="lead">Instructions for encrypting text will appear here. Once the user enters the mssage and presses the button this text will be replaced with the encrypted cypher text.</p>
-          <form>
+            <h1>Encryption</h1>
+            <p class="lead">
+            Enter a plain text message. Upon submission your encrypted text will appear and you may enter it below to have it decrypted.
+            </p>
+            {% if encrypt %}
+              {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                  <ul>
+                    {% for message in messages %}
+                      <li>{{ message }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+            {% endwith %}
+          {% endif %}
+          <form action="" method="post">
             <div class="form-group">
-              <label for="inputPlainText">Plain Text</label>
-              <input type="text" class="form-control" id="inputPlainText" placeholder="Enter your plain text message...">
+                {{ encrypt_form.hidden_tag() }}
+                {{ encrypt_form.plaintext.label (class="form-control-label")}}
+                {{ encrypt_form.plaintext (class="form-control")}}
             </div>
-            <button type="submit" class="btn btn-primary">Encrypt</button>
+            {{ encrypt_form.encrypt (class="btn btn-outline-info")}}
           </form>
       </div>
     </div>
@@ -32,19 +48,28 @@
     <div class="container">
         <div class="jumbotron">
             <h1>Enigma Machine</h1>
-            <p class="lead">Instructions for decrypting text will appear here. Once the user enters the mssage and presses the button this text will be replaced with the decrypted plain text.</p>
-            <form>
+            <p class="lead">Enter the encrypted message you received above.</p>
+            {% if not encrypt %}
+              {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                  <ul>
+                    {% for message in messages %}
+                      <li>{{ message }}</li>
+                    {% endfor %}
+                  </ul>
+                {% endif %}
+            {% endwith %}
+          {% endif %}
+          <form action="" method="POST">
             <div class="form-group">
-              <div class="col-4">
-                <label for="inputMachineSetting">Machine Settings</label>
-                <input type="text" class="form-control" id="inputCypherText" placeholder="Enter rotor settings...">
-              </div>
-              <label for="inputPlainText">Cypher Text</label>
-              <input type="text" class="form-control" id="inputCypherText" placeholder="Enter your cyphertext...">
+                {{ decrypt_form.hidden_tag() }}
+                {{ decrypt_form.cyphertext.label (class="form-control-label")}}
+                {{ decrypt_form.cyphertext (class="form-control")}}
             </div>
-            <button type="submit" class="btn btn-danger">Decrypt</button>
+            {{ decrypt_form.decrypt (class="btn btn-outline-info")}}
           </form>
         </div>
+    </div>
     </div>
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
