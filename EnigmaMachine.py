@@ -14,8 +14,9 @@ from Rotors import Rotor
 from Wiring import Wiring
 
 
-alph = string.ascii_lowercase
-ALPH = string.ascii_uppercase
+alph       = string.ascii_lowercase
+ALPH       = string.ascii_uppercase
+digits     = '0123456789'
 spec_chars = ['\'', ';', ':', '.', '"', '?', '!', ',', ' ', '\n', '\t']
 
 class EnigmaMachine:
@@ -126,10 +127,16 @@ class EnigmaMachine:
         user_input = self.get_input()
 
         for char in user_input:
+            print(char)
             if char in spec_chars:
                 output.append(char)
                 #  do not advance rotors for special chars
                 continue
+            if char in digits:
+                print(True)
+                output.append(char)
+                continue
+                #  do not advance rotors for digits
             if char in ALPH:
                 if verbose:
                     output.append(self.map_input(char.lower(), verbose).upper())
